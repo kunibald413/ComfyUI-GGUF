@@ -2,6 +2,7 @@
 import torch
 import logging
 import collections
+import time
 
 import comfy.sd
 import comfy.utils
@@ -122,7 +123,10 @@ class UnetLoaderGGUF:
         return {
             "required": {
                 "unet_name": (unet_names,),
-            }
+            },
+            "optional": {
+                "should_change": ("BOOLEAN", {"default": False}),
+            },
         }
 
     RETURN_TYPES = ("MODEL",)
@@ -130,7 +134,7 @@ class UnetLoaderGGUF:
     CATEGORY = "bootleg"
     TITLE = "Unet Loader (GGUF)"
 
-    def load_unet(self, unet_name, dequant_dtype=None, patch_dtype=None, patch_on_device=None):
+    def load_unet(self, unet_name, dequant_dtype=None, patch_dtype=None, patch_on_device=None, should_change=False):
         ops = GGMLOps()
 
         if dequant_dtype in ("default", None):
@@ -159,6 +163,13 @@ class UnetLoaderGGUF:
         model = GGUFModelPatcher.clone(model)
         model.patch_on_device = patch_on_device
         return (model,)
+
+    @classmethod
+    def IS_CHANGED(s, should_change=False, *args, **kwargs):
+        if should_change:
+            return time.time()
+        else:
+            return False
 
 class UnetLoaderGGUFAdvanced(UnetLoaderGGUF):
     @classmethod
